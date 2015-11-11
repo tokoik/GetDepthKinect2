@@ -9,12 +9,12 @@
 using namespace gg;
 
 // カラー画像のサイズ
-//#define COLOR_W 640
-//#define COLOR_H 480
+#define COLOR_W 640
+#define COLOR_H 480
 
 // デプス画像のサイズ
-//#define DEPTH_W 320
-//#define DEPTH_H 240
+#define DEPTH_W 512
+#define DEPTH_H 424
 
 // カメラに対するオブジェクトの中心位置
 const GLfloat objectCenter[] = { 0.0f, 0.0f, -5.0f };

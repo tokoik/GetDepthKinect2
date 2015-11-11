@@ -1,16 +1,21 @@
 //
-// Kinect (v1) のデプスマップ取得
+// Kinect (v2) のデプスマップ取得
 //
 
 // 標準ライブラリ
 #include <Windows.h>
-#include <memory>
 
 // ウィンドウ関連の処理
 #include "Window.h"
 
 // センサ関連の処理
 #include "KinectV2.h"
+
+// 描画に用いるメッシュ
+#include "Mesh.h"
+
+// 計算に用いるシェーダ
+#include "Calculate.h"
 
 //
 // メインプログラム
@@ -52,15 +57,21 @@ int main()
     return EXIT_FAILURE;
   }
 
-  // 矩形データ
-  const std::unique_ptr<const GgTriangles> rect(ggRectangle());
+  // 深度センサの解像度
+  int width, height;
+  sensor.getResolution(&width, &height);
 
-  // シェーダ
+  // 描画に使うメッシュ
+  const Mesh mesh(width, height, sensor.getTexcoord());
+
+  // 描画用のシェーダ
   GgSimpleShader simple("simple.vert", "simple.frag");
 
-  // uniform 変数の場所
-  const GLint colorLoc(glGetUniformLocation(simple.get(), "color"));
-  const GLint depthLoc(glGetUniformLocation(simple.get(), "depth"));
+  // デプスデータから頂点位置を計算するシェーダ
+  const Calculate position(width, height, "position.frag");
+
+  // 頂点位置から法線ベクトルを計算するシェーダ
+  const Calculate normal(width, height, "normal.frag");
 
   // 背景色を設定する
   glClearColor(background[0], background[1], background[2], background[3]);
@@ -72,25 +83,42 @@ int main()
   // ウィンドウが開いている間くり返し描画する
   while (!window.shouldClose())
   {
+    // 頂点位置の計算
+    position.use();
+    glUniform1i(0, 0);
+    glActiveTexture(GL_TEXTURE0);
+    sensor.getDepth();
+    const std::vector<GLuint> &positionTexture(position.calculate());
+
+    // 法線ベクトルの計算
+    normal.use();
+    glUniform1i(0, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, positionTexture[0]);
+    const std::vector<GLuint> &normalTexture(normal.calculate());
+
     // 画面消去
     window.clear();
 
-    // シェーダプログラムの使用開始
+    // 描画用のシェーダプログラムの使用開始
     simple.use();
     simple.loadMatrix(window.getMp(), window.getMw());
     simple.setLight(light);
     simple.setMaterial(material);
 
     // テクスチャ
-    glUniform1i(colorLoc, 0);
+    glUniform1i(0, 0);
     glActiveTexture(GL_TEXTURE0);
-    sensor.getColor();
-    glUniform1i(depthLoc, 1);
+    glBindTexture(GL_TEXTURE_2D, positionTexture[0]);
+    glUniform1i(1, 1);
     glActiveTexture(GL_TEXTURE1);
-    sensor.getDepth();
+    glBindTexture(GL_TEXTURE_2D, normalTexture[0]);
+    glUniform1i(2, 2);
+    glActiveTexture(GL_TEXTURE2);
+    sensor.getColor();
 
     // 図形描画
-    sensor.draw();
+    mesh.draw();
 
     // バッファを入れ替える
     window.swapBuffers();
