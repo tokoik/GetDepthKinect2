@@ -1,5 +1,6 @@
 #version 150 core
 #extension GL_ARB_explicit_attrib_location : enable
+#extension GL_ARB_explicit_uniform_location : enable
 
 // 光源
 uniform vec4 lamb;                                  // 環境光成分
@@ -17,14 +18,14 @@ uniform float kshi;                                 // 輝き係数
 uniform mat4 mw;                                    // 視点座標系への変換行列
 uniform mat4 mc;                                    // クリッピング座標系への変換行列
 uniform mat4 mg;                                    // 法線ベクトルの変換行列
-uniform mat4 mt;                                    // テクスチャ座標の変換行列
 
 // テクスチャ
-uniform sampler2D depth;
+layout (location = 0) uniform sampler2D position;   // 頂点位置のテクスチャ
+layout (location = 1) uniform sampler2D normal;     // 法線ベクトルのテクスチャ
 
 // 頂点属性
-layout (location = 0) in vec4 ctex;                 // カラーのテクスチャ座標
-layout (location = 1) in vec4 pv;                   // 頂点のカメラ座標
+layout (location = 0) in vec2 pc;                   // 頂点のテクスチャ座標
+layout (location = 1) in vec2 cc;                   // カラーのテクスチャ座標
 
 // ラスタライザに送る頂点属性
 out vec4 idiff;                                     // 拡散反射光強度
@@ -33,8 +34,11 @@ out vec2 texcoord;                                  // テクスチャ座標
 
 void main(void)
 {
-  // 法線ベクトルの算出
-  vec4 nv = vec4(0.0, 0.0, 1.0, 0.0);
+  // 頂点位置
+  vec4 pv = texture(position, pc);
+
+  // 法線ベクトル
+  vec4 nv = texture(normal, pc);
 
   // 座標計算
   vec4 p = mw * pv;                                 // 視点座標系の頂点の位置
@@ -49,7 +53,7 @@ void main(void)
   ispec = pow(max(dot(n, h), 0.0), kshi) * kspec * lspec;
 
   // テクスチャ座標
-  texcoord = ctex.st;
+  texcoord = cc;
 
   // クリッピング座標系における座標値
   gl_Position = mc * pv;

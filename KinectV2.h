@@ -15,7 +15,7 @@
 #define EXPAND_RESOLUTION(width, height) NUI_IMAGE_RESOLUTION_##width##x##height
 #define RESOLUTION(width, height) EXPAND_RESOLUTION(width, height)
 
-class Sensor
+class KinectV2
 {
   // センサの識別子
   static IKinectSensor *sensor;
@@ -58,18 +58,18 @@ class Sensor
   GLsizei vertexCount;
 
   // コピーコンストラクタ (コピー禁止)
-  Sensor(const Sensor &w);
+  KinectV2(const KinectV2 &w);
 
   // 代入 (代入禁止)
-  Sensor &operator=(const Sensor &w);
+  KinectV2 &operator=(const KinectV2 &w);
 
 public:
 
   // コンストラクタ
-  Sensor();
+  KinectV2();
 
   // デストラクタ
-  virtual ~Sensor();
+  virtual ~KinectV2();
 
   // カラーデータを取得する
   bool getColor() const;

@@ -1,4 +1,5 @@
 #include "Window.h"
+
 //
 // ウィンドウ関連の処理
 //
@@ -68,6 +69,9 @@ Window::~Window()
 //
 void Window::clear()
 {
+  // ウィンドウ全体をビューポートにする
+  glViewport(0, 0, width, height);
+
   // カラーバッファとデプスバッファを消去する
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -99,8 +103,8 @@ void Window::swapBuffers()
   {
     // カメラを上下左右に移動する
     const double d(fabs(ez) + 1.0);
-    ex += GLfloat(motionFactor[0] * (x - cx) * d / w);
-    ey += GLfloat(motionFactor[1] * (cy - y) * d / h);
+    ex += GLfloat(motionFactor[0] * (x - cx) * d / GLfloat(width));
+    ey += GLfloat(motionFactor[1] * (cy - y) * d / GLfloat(height));
     cx = x;
     cy = y;
   }
@@ -108,7 +112,7 @@ void Window::swapBuffers()
   // 右ボタンドラッグ
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2))
   {
-    // 物体を回転する
+    // 視点を回転する
     trackball.motion(float(x), float(y));
   }
 }
@@ -133,8 +137,8 @@ void Window::resize(GLFWwindow *window, int width, int height)
     instance->trackball.region(width, height);
 
     // ウィンドウの幅と高さを保存しておく
-    instance->w = GLfloat(width);
-    instance->h = GLfloat(height);
+    instance->width = width;
+    instance->height = height;
 
     // ウィンドウ全体をビューポートにする
     glViewport(0, 0, width, height);
@@ -202,8 +206,16 @@ void Window::wheel(GLFWwindow *window, double x, double y)
 
   if (instance)
   {
-    // カメラを前後に移動する
-    instance->ez += GLfloat(motionFactor[2] * (fabs(instance->ez) + 1.0) * y);
+    // マウスホイールによる視点の移動量を求める
+    const GLfloat move(GLfloat(motionFactor[2] * (fabs(instance->ez) + 1.0) * y));
+
+    // 視点の回転の変換行列を取り出す
+    const GLfloat *rotation(instance->trackball.get());
+
+    // 視点が向いている方向に移動する
+    instance->ex += rotation[8] * move;
+    instance->ey += rotation[9] * move;
+    instance->ez -= rotation[10] * move;
   }
 }
 
@@ -225,11 +237,11 @@ void Window::keyboard(GLFWwindow *window, int key, int scancode, int action, int
       switch (key)
       {
       case GLFW_KEY_R:
-        // 物体の回転をリセットする
+        // 視点の回転をリセットする
         instance->trackball.reset();
         break;
       case GLFW_KEY_T:
-        // カメラの位置をリセットする
+        //視点の位置をリセットする
         instance->ex = objectCenter[0];
         instance->ey = objectCenter[1];
         instance->ez = objectCenter[2];

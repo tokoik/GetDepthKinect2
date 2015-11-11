@@ -1,4 +1,4 @@
-#include "Sensor.h"
+#include "KinectV2.h"
 
 //
 // 深度センサ関連の処理
@@ -11,7 +11,7 @@
 #pragma comment(lib, "Kinect20.lib")
 
 // コンストラクタ
-Sensor::Sensor()
+KinectV2::KinectV2()
 {
   // センサを取得する
   if (GetDefaultKinectSensor(&sensor) == S_OK)
@@ -111,7 +111,7 @@ Sensor::Sensor()
 }
 
 // デストラクタ
-Sensor::~Sensor()
+KinectV2::~KinectV2()
 {
   if (sensor != NULL)
   {
@@ -138,7 +138,7 @@ Sensor::~Sensor()
 }
 
 // カラーデータを取得する
-bool Sensor::getColor() const
+bool KinectV2::getColor() const
 {
   // カラーのテクスチャを指定する
   glBindTexture(GL_TEXTURE_2D, colorTexture);
@@ -162,7 +162,7 @@ bool Sensor::getColor() const
 }
 
 // デプスデータを取得する
-bool Sensor::getDepth() const
+bool KinectV2::getDepth() const
 {
   // デプスのテクスチャを指定する
   glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -199,4 +199,4 @@ bool Sensor::getDepth() const
 }
 
 // センサの識別子
-IKinectSensor *Sensor::sensor(NULL);
+IKinectSensor *KinectV2::sensor(NULL);

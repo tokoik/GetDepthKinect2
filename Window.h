@@ -16,7 +16,7 @@ class Window
   GLFWwindow *const window;
 
   // ウィンドウの幅と高さ
-  GLfloat w, h;
+  GLint width, height;
 
   // カメラに対するオブジェクトの中心位置
   GLfloat ex, ey, ez;

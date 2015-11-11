@@ -147,18 +147,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Calculate.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="gg.h" />
-    <ClInclude Include="Sensor.h" />
+    <ClInclude Include="KinectV2.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Rect.h" />
+    <ClInclude Include="Shape.h" />
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Calculate.cpp" />
     <ClCompile Include="gg.cpp" />
+    <ClCompile Include="KinectV2.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Sensor.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Rect.cpp" />
+    <ClCompile Include="Shape.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="normal.frag" />
+    <None Include="position.frag" />
+    <None Include="rectangle.vert" />
     <None Include="simple.frag" />
     <None Include="simple.vert" />
   </ItemGroup>

@@ -10,7 +10,7 @@
 #include "Window.h"
 
 // センサ関連の処理
-#include "Sensor.h"
+#include "KinectV2.h"
 
 //
 // メインプログラム
@@ -44,7 +44,7 @@ int main()
   }
 
   // 深度センサを有効にする
-  Sensor sensor;
+  KinectV2 sensor;
   if (sensor.getActivated() == 0)
   {
     // センサが使えなかった
