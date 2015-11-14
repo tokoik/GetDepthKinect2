@@ -5,13 +5,13 @@
 //
 
 // テクスチャ座標の生成してバッファオブジェクトに転送する
-void Mesh::genTexcoord()
+void Mesh::genCoord()
 {
-  GLfloat (*const t)[2](static_cast<GLfloat(*)[2]>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+  GLfloat (*const coord)[2](static_cast<GLfloat(*)[2]>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
   for (int i = 0; i < vertices; ++i)
   {
-    t[i][0] = (GLfloat(i % slices) + 0.5f) / GLfloat(slices);
-    t[i][1] = (GLfloat(i / slices) + 0.5f) / GLfloat(stacks);
+    coord[i][0] = (GLfloat(i % slices) + 0.5f) / GLfloat(slices);
+    coord[i][1] = (GLfloat(i / slices) + 0.5f) / GLfloat(stacks);
   }
   glUnmapBuffer(GL_ARRAY_BUFFER);
 }
@@ -32,7 +32,7 @@ Mesh::Mesh(int slices, int stacks, const GLfloat (*texcoord)[2])
   glBufferData(GL_ARRAY_BUFFER, vertices * 2 * sizeof (GLfloat), NULL, GL_STATIC_DRAW);
 
   // デプスデータのテクスチャ座標を求めてバッファオブジェクトに転送する
-  genTexcoord();
+  genCoord();
 
   // インデックスが 0 の varying 変数に割り当てる
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -43,7 +43,7 @@ Mesh::Mesh(int slices, int stacks, const GLfloat (*texcoord)[2])
   glBufferData(GL_ARRAY_BUFFER, vertices * 2 * sizeof (GLfloat), NULL, GL_DYNAMIC_DRAW);
 
   // カラーデータのテクスチャ座標を求めてバッファオブジェクトに転送する
-  genTexcoord();
+  genCoord();
 
   // インデックスが 1 の varying 変数に割り当てる
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);

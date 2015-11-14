@@ -53,7 +53,7 @@ void main(void)
   ispec = pow(max(dot(n, h), 0.0), kshi) * kspec * lspec;
 
   // テクスチャ座標
-  texcoord = cc;
+  texcoord = cc * vec2(5.2083333e-4, 9.2592593e-4);	// = 1 / vec2(1920, 1080)
 
   // クリッピング座標系における座標値
   gl_Position = mc * pv;

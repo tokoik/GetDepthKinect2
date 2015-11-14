@@ -17,6 +17,9 @@
 // 計算に用いるシェーダ
 #include "Calculate.h"
 
+// 頂点位置の生成をシェーダ (position.frag) で行うなら 1
+#define GENERATE_POSITOPN 0
+
 //
 // メインプログラム
 //
@@ -83,6 +86,7 @@ int main()
   // ウィンドウが開いている間くり返し描画する
   while (!window.shouldClose())
   {
+#if GENERATE_POSITOPN
     // 頂点位置の計算
     position.use();
     glUniform1i(0, 0);
@@ -96,6 +100,14 @@ int main()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, positionTexture[0]);
     const std::vector<GLuint> &normalTexture(normal.calculate());
+#else
+    // 法線ベクトルの計算
+    normal.use();
+    glUniform1i(0, 0);
+    glActiveTexture(GL_TEXTURE0);
+    sensor.getPoint();
+    const std::vector<GLuint> &normalTexture(normal.calculate());
+#endif
 
     // 画面消去
     window.clear();
@@ -107,9 +119,11 @@ int main()
     simple.setMaterial(material);
 
     // テクスチャ
+#if GENERATE_POSITOPN
     glUniform1i(0, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, positionTexture[0]);
+#endif
     glUniform1i(1, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, normalTexture[0]);

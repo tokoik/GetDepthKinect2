@@ -11,10 +11,6 @@
 // ウィンドウ関連の処理
 #include "Window.h"
 
-// NUI_IMAGE_RESOLUTION の設定
-#define EXPAND_RESOLUTION(width, height) NUI_IMAGE_RESOLUTION_##width##x##height
-#define RESOLUTION(width, height) EXPAND_RESOLUTION(width, height)
-
 class KinectV2
 {
   // センサの識別子
@@ -23,39 +19,42 @@ class KinectV2
   // 座標のマッピング
   ICoordinateMapper *coordinateMapper;
 
-  // カラーデータ
-  IColorFrameSource *colorSource;
-  IColorFrameReader *colorReader;
-  IFrameDescription *colorDescription;
-
-  // カラーデータのサイズ
-  int color_w, color_h, color_size;
-
-  // カラーデータ変換用の一時バッファ
-  BYTE *color_buffer;
-
-  // カラーデータを格納するテクスチャ
-  GLuint colorTexture;
-
   // デプスデータ
   IDepthFrameSource *depthSource;
   IDepthFrameReader *depthReader;
   IFrameDescription *depthDescription;
 
   // デプスデータのサイズ
-  int depth_w, depth_h, depth_count;
+  int depthWidth, depthHeight;
 
   // デプスデータを格納するテクスチャ
   GLuint depthTexture;
 
-  // 描画に使う頂点配列オブジェクト
-  GLuint vao;
+  // デプスデータから変換したポイントのカメラ座標を格納するテクスチャ
+  GLuint pointTexture;
 
-  // 描画に使う頂点バッファオブジェクト
-  GLuint vbo[3];
+  // ポイントの数とカメラ座標への変換に用いる一時バッファのサイズ
+  int pointCount, pointSize;
 
-  // 描画する三角形の頂点の総数
-  GLsizei vertexCount;
+  // カメラ座標への変換に用いる一時バッファ
+  GLfloat (*pointBuffer)[3];
+
+  // デプスデータの画素におけるカラーデータのテクスチャ座標
+  GLfloat(*texcoord)[2];
+
+  // カラーデータ
+  IColorFrameSource *colorSource;
+  IColorFrameReader *colorReader;
+  IFrameDescription *colorDescription;
+
+  // カラーデータのサイズ
+  int colorWidth, colorHeight, colorSize;
+
+  // カラーデータ変換用の一時バッファ
+  BYTE *colorBuffer;
+
+  // カラーデータを格納するテクスチャ
+  GLuint colorTexture;
 
   // コピーコンストラクタ (コピー禁止)
   KinectV2(const KinectV2 &w);
@@ -71,22 +70,31 @@ public:
   // デストラクタ
   virtual ~KinectV2();
 
+  // デプスデータを取得する
+  bool getDepth() const;
+
+  // カメラ座標を取得する
+  bool getPoint() const;
+
   // カラーデータを取得する
   bool getColor() const;
 
-  // デプスデータを取得する
-  bool getDepth() const;
+  // デプスデータの解像度を取得する
+  void getResolution(int *width, int *height) const
+  {
+    *width = depthWidth;
+    *height = depthHeight;
+  }
+
+  // カラーのテクスチャ座標を取得する
+  const GLfloat(*getTexcoord() const)[2]
+  {
+    return texcoord;
+  }
 
   // 使用しているセンサーの数を調べる
   int getActivated() const
   {
     return sensor != NULL ? 1 : 0;
-  }
-
-  // 描画
-  void draw() const
-  {
-    glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, vertexCount, GL_UNSIGNED_INT, NULL);
   }
 };

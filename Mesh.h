@@ -27,8 +27,8 @@ class Mesh : public Shape
   // カラーデータのテクスチャ座標の読み取り元
   const GLfloat (*texcoord)[2];
   
-  // テクスチャ座標の生成してバインドされているバッファオブジェクトに転送する
-  void genTexcoord();
+  // テクスチャ座標を生成してバインドされているバッファオブジェクトに転送する
+  void genCoord();
 
 public:
 
@@ -39,9 +39,9 @@ public:
   virtual ~Mesh();
 
   // カラーデータのテクスチャ座標の読み取り元を設定する
-  void setTexcoord(GLfloat (*texcoord)[2])
+  void setTexcoord(GLfloat (*coord)[2])
   {
-    this->texcoord = texcoord;
+    texcoord = coord;
   }
 
   // 描画

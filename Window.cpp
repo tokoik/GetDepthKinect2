@@ -20,18 +20,8 @@ Window::Window(int width, int height, const char *title, GLFWmonitor *monitor, G
   // 現在のウィンドウを処理対象にする
   glfwMakeContextCurrent(window);
 
-  // 最初のインスタンスを生成するときだけ
-  if (!initialized)
-  {
-    // ゲームグラフィックス特論の都合にもとづく初期化を行う
-    ggInit();
-
-    // 帰線消去期間を待つ
-    glfwSwapInterval(1);
-
-    // 最初のインスタンスを生成した
-    initialized = true;
-  }
+  // ゲームグラフィックス特論の都合にもとづく初期化を行う
+  ggInit();
 
   // このインスタンスの this ポインタを記録しておく
   glfwSetWindowUserPointer(window, this);
@@ -265,6 +255,3 @@ void Window::keyboard(GLFWwindow *window, int key, int scancode, int action, int
     }
   }
 }
-
-// 最初のインスタンスを生成したら真
-bool Window::initialized(false);

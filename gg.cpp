@@ -2508,9 +2508,29 @@ PFNGLWINDOWPOS4IVMESAPROC glWindowPos4ivMESA;
 PFNGLWINDOWPOS4SMESAPROC glWindowPos4sMESA;
 PFNGLWINDOWPOS4SVMESAPROC glWindowPos4svMESA;
 PFNGLWRITEMASKEXTPROC glWriteMaskEXT;
+#endif
 
-static inline void initGLExtFunc()
+/*!
+** \brief ゲームグラフィックス特論の都合にもとづく初期化を行う.
+**
+**   Windows で OpenGL 1.2 以降の API を有効化する.
+*/
+void gg::ggInit()
 {
+  // この関数がまだ実行されていなければ false
+  static bool initialized(false);
+
+  // すでにこの関数が実行されていたら以降の処理を行わない
+  if (initialized) return;
+
+  // この関数が実行されたことを記録する
+  initialized = true;
+
+  // 帰線消去期間を待つ
+  glfwSwapInterval(1);
+
+#if defined(_WIN32)
+  // OpenGL 1.2 以降の API を有効化する
   glAccumxOES = (PFNGLACCUMXOESPROC)glfwGetProcAddress("glAccumxOES");
   glActiveProgramEXT = (PFNGLACTIVEPROGRAMEXTPROC)glfwGetProcAddress("glActiveProgramEXT");
   glActiveShaderProgram = (PFNGLACTIVESHADERPROGRAMPROC)glfwGetProcAddress("glActiveShaderProgram");
@@ -4980,19 +5000,6 @@ static inline void initGLExtFunc()
   glWindowPos4sMESA = (PFNGLWINDOWPOS4SMESAPROC)glfwGetProcAddress("glWindowPos4sMESA");
   glWindowPos4svMESA = (PFNGLWINDOWPOS4SVMESAPROC)glfwGetProcAddress("glWindowPos4svMESA");
   glWriteMaskEXT = (PFNGLWRITEMASKEXTPROC)glfwGetProcAddress("glWriteMaskEXT");
-}
-#endif
-
-/*!
-** \brief ゲームグラフィックス特論の都合にもとづく初期化を行う.
-**
-**   Windows で OpenGL 1.2 以降の API を有効化する.
-*/
-void gg::ggInit()
-{
-#if defined(_WIN32)
-  // OpenGL 1.2 以降の API を有効化する
-  if (glCreateProgram == NULL) initGLExtFunc();
 #endif
 }
 
@@ -5286,6 +5293,7 @@ GLubyte *gg::ggLoadTga(const char *name, GLsizei *width, GLsizei *height, GLenum
 
   // データサイズ
   const size_t size(*width * *height * depth);
+  if (size < 2) return NULL;
 
   // 読み込みに使うメモリを確保する
   GLubyte *const buffer(new(std::nothrow) GLubyte[size]);
@@ -5751,7 +5759,7 @@ bool gg::ggLoadObj(const char *name, GLuint &nv, GLfloat (*&pos)[3], GLfloat (*&
   }
 
   // 頂点法線の値を 0 にしておく
-  std::fill(static_cast<GLfloat *>(&norm[0][0]), static_cast<GLfloat *>(&norm[nv][0]), 0.0f);
+  for (GLuint i = 0; i < nv; ++i) norm[i][0] = norm[i][1] = norm[i][2] = 0.0f;
 
   // 面の法線の算出とデータのコピー
   for (std::vector<idx>::const_iterator it = tface.begin(); it != tface.end(); ++it)

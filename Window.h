@@ -30,9 +30,6 @@ class Window
   // プロジェクション変換行列
   GgMatrix mp;
 
-  // 最初のインスタンスの時だけ偽
-  static bool initialized;
-
   //
   // コピーコンストラクタ (コピー禁止)
   //
