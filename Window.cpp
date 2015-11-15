@@ -12,7 +12,6 @@
 //
 Window::Window(int width, int height, const char *title, GLFWmonitor *monitor, GLFWwindow *share)
   : window(glfwCreateWindow(width, height, title, monitor, share))
-  , ex(objectCenter[0]), ey(objectCenter[1]), ez(objectCenter[2])
 {
   // ウィンドウが開いていなかったら戻る
   if (!window) return;
@@ -38,6 +37,11 @@ Window::Window(int width, int height, const char *title, GLFWmonitor *monitor, G
   // キーボードを操作した時の処理
   glfwSetKeyCallback(window, keyboard);
 
+  // 視点の初期位置を設定する
+  eye[0] = objectCenter[0];
+  eye[1] = objectCenter[1];
+  eye[2] = objectCenter[2];
+
   // ビューポートとプロジェクション変換行列を初期化する
   resize(window, width, height);
 }
@@ -60,7 +64,7 @@ Window::~Window()
 void Window::clear()
 {
   // ウィンドウ全体をビューポートにする
-  glViewport(0, 0, width, height);
+  glViewport(0, 0, size[0], size[1]);
 
   // カラーバッファとデプスバッファを消去する
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -92,11 +96,11 @@ void Window::swapBuffers()
   if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1))
   {
     // カメラを上下左右に移動する
-    const double d(fabs(ez) + 1.0);
-    ex += GLfloat(motionFactor[0] * (x - cx) * d / GLfloat(width));
-    ey += GLfloat(motionFactor[1] * (cy - y) * d / GLfloat(height));
-    cx = x;
-    cy = y;
+    const double d(fabs(eye[2]) + 1.0);
+    eye[0] += GLfloat(motionFactor[0] * (x - start[0]) * d / GLfloat(size[0]));
+    eye[1] += GLfloat(motionFactor[1] * (start[1] - y) * d / GLfloat(size[1]));
+    start[0] = x;
+    start[1] = y;
   }
 
   // 右ボタンドラッグ
@@ -127,8 +131,8 @@ void Window::resize(GLFWwindow *window, int width, int height)
     instance->trackball.region(width, height);
 
     // ウィンドウの幅と高さを保存しておく
-    instance->width = width;
-    instance->height = height;
+    instance->size[0] = width;
+    instance->size[1] = height;
 
     // ウィンドウ全体をビューポートにする
     glViewport(0, 0, width, height);
@@ -158,8 +162,8 @@ void Window::mouse(GLFWwindow *window, int button, int action, int mods)
       if (action)
       {
         // ドラッグ開始位置を保存する
-        instance->cx = x;
-        instance->cy = y;
+        instance->start[0] = x;
+        instance->start[1] = y;
       }
       break;
     case GLFW_MOUSE_BUTTON_2:
@@ -197,15 +201,15 @@ void Window::wheel(GLFWwindow *window, double x, double y)
   if (instance)
   {
     // マウスホイールによる視点の移動量を求める
-    const GLfloat move(GLfloat(motionFactor[2] * (fabs(instance->ez) + 1.0) * y));
+    const GLfloat move(GLfloat(motionFactor[2] * (fabs(instance->eye[2]) + 1.0) * y));
 
     // 視点の回転の変換行列を取り出す
     const GLfloat *rotation(instance->trackball.get());
 
     // 視点が向いている方向に移動する
-    instance->ex += rotation[8] * move;
-    instance->ey += rotation[9] * move;
-    instance->ez -= rotation[10] * move;
+    instance->eye[0] += rotation[8] * move;
+    instance->eye[1] += rotation[9] * move;
+    instance->eye[2] -= rotation[10] * move;
   }
 }
 
@@ -232,9 +236,9 @@ void Window::keyboard(GLFWwindow *window, int key, int scancode, int action, int
         break;
       case GLFW_KEY_T:
         //視点の位置をリセットする
-        instance->ex = objectCenter[0];
-        instance->ey = objectCenter[1];
-        instance->ez = objectCenter[2];
+        instance->eye[0] = objectCenter[0];
+        instance->eye[1] = objectCenter[1];
+        instance->eye[2] = objectCenter[2];
         break;
       case GLFW_KEY_SPACE:
         break;
