@@ -86,7 +86,7 @@ public:
     *height = depthHeight;
   }
 
-  // カラーのテクスチャ座標を取得する
+  // カラーデータのテクスチャ座標を取得する
   const GLfloat(*getTexcoord() const)[2]
   {
     return texcoord;
