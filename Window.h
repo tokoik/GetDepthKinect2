@@ -16,13 +16,13 @@ class Window
   GLFWwindow *const window;
 
   // ウィンドウの幅と高さ
-  GLint width, height;
+  GLsizei size[2];
 
   // カメラに対するオブジェクトの中心位置
-  GLfloat ex, ey, ez;
+  GLfloat eye[3];
 
   // ドラッグ開始位置
-  double cx, cy;
+  double start[2];
 
   // トラックボール処理
   GgTrackball trackball;
@@ -119,11 +119,19 @@ public:
   static void keyboard(GLFWwindow *window, int key, int scancode, int action, int mods);
 
   //
+  // 現在のウィンドウのサイズを得る
+  //
+  const GLsizei *getSize() const
+  {
+    return size;
+  }
+
+  //
   // モデルビュー変換行列を得る
   //
   GgMatrix getMw() const
   {
-    return trackball.getMatrix() * ggTranslate(ex, ey, ez);
+    return trackball.getMatrix() * ggTranslate(eye);
   }
 
   //
