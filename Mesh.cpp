@@ -17,18 +17,15 @@ void Mesh::genCoord()
 }
 
 // コンストラクタ
-Mesh::Mesh(int slices, int stacks, const GLfloat (*texcoord)[2])
+Mesh::Mesh(int slices, int stacks, GLuint coordBuffer)
   : slices(slices)
   , stacks(stacks)
   , vertices(slices * stacks)
   , indexes((slices - 1) * (stacks - 1) * 3 * 2)
-  , texcoord(texcoord)
 {
-  // 描画に使うメッシュデータの頂点バッファオブジェクトを準備する
-  glGenBuffers(sizeof vbo / sizeof vbo[0], vbo);
-
-  // デプスデータのサンプリング用のバッファオブジェクト
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+  // デプスデータのサンプリング用のバッファオブジェクトを準備する
+  glGenBuffers(1, &depthCoord);
+  glBindBuffer(GL_ARRAY_BUFFER, depthCoord);
   glBufferData(GL_ARRAY_BUFFER, vertices * 2 * sizeof (GLfloat), NULL, GL_STATIC_DRAW);
 
   // デプスデータのテクスチャ座標を求めてバッファオブジェクトに転送する
@@ -38,19 +35,23 @@ Mesh::Mesh(int slices, int stacks, const GLfloat (*texcoord)[2])
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
   glEnableVertexAttribArray(0);
 
-  // カラーデータをデプスデータの画素単位にサンプリングするためのバッファオブジェクト
-  glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-  glBufferData(GL_ARRAY_BUFFER, vertices * 2 * sizeof (GLfloat), NULL, GL_DYNAMIC_DRAW);
+  // カラーデータのテクスチャ座標を格納するバッファオブジェクトが指定されていたら
+  if (coordBuffer > 0)
+  {
+    // カラーデータのテクスチャ座標を格納するバッファオブジェクトを結合する
+    glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
 
-  // カラーデータのテクスチャ座標を求めてバッファオブジェクトに転送する
-  genCoord();
+    // カラーデータのテクスチャ座標の初期値を求めてバッファオブジェクトに転送する
+    genCoord();
 
-  // インデックスが 1 の varying 変数に割り当てる
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-  glEnableVertexAttribArray(1);
+    // インデックスが 1 の varying 変数に割り当てる
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+    glEnableVertexAttribArray(1);
+  }
 
   // インデックス用のバッファオブジェクト
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[2]);
+  glGenBuffers(1, &indexBuffer);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes * sizeof (GLuint), NULL, GL_STATIC_DRAW);
 
   // インデックスを求めてバッファオブジェクトに転送する
@@ -73,20 +74,13 @@ Mesh::Mesh(int slices, int stacks, const GLfloat (*texcoord)[2])
 Mesh::~Mesh()
 {
   // 頂点バッファオブジェクトを削除する
-  glDeleteBuffers(sizeof vbo / sizeof vbo[0], vbo);
+  glDeleteBuffers(1, &depthCoord);
+  glDeleteBuffers(1, &indexBuffer);
 }
 
 // 描画
 void Mesh::draw() const
 {
-  // テクスチャ座標の読み取り先が設定されていれば
-  if (texcoord != NULL)
-  {
-    // カラーのテクスチャ座標をバッファオブジェクトに転送する
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices * 2 * sizeof(GLfloat), texcoord);
-  }
-
   // 頂点配列オブジェクトを指定して描画する
   Shape::draw();
   glDrawElements(GL_TRIANGLES, indexes, GL_UNSIGNED_INT, NULL);

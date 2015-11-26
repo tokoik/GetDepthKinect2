@@ -27,31 +27,34 @@ class KinectV2 : public DepthCamera
   IDepthFrameReader *depthReader;
   IFrameDescription *depthDescription;
 
+  // デプスデータの画素数
+  int depthCount;
+
   // デプスデータを格納するテクスチャ
   GLuint depthTexture;
 
   // デプスデータから変換したポイントのカメラ座標を格納するテクスチャ
   GLuint pointTexture;
 
-  // ポイントの数とカメラ座標への変換に用いる一時バッファのサイズ
-  int pointCount, pointSize;
-
-  // カメラ座標への変換に用いる一時バッファ
-  GLfloat (*pointBuffer)[3];
-
-  // デプスデータの画素におけるカラーデータのテクスチャ座標
-  GLfloat(*texcoord)[2];
+  // デプスデータからカメラ座標を求めるときに用いる一時メモリ
+  GLfloat (*position)[3];
 
   // カラーデータ
   IColorFrameSource *colorSource;
   IColorFrameReader *colorReader;
   IFrameDescription *colorDescription;
 
-  // カラーデータ変換用の一時バッファ
-  BYTE *colorBuffer;
+  // カラーデータの画素数
+  int colorCount;
 
   // カラーデータを格納するテクスチャ
   GLuint colorTexture;
+
+  // カラーデータの変換に用いる一時メモリ
+  GLubyte *color;
+
+  // デプスデータの画素におけるカラーデータのテクスチャ座標値を格納するバッファオブジェクト
+  GLuint coordBuffer;
 
   // コピーコンストラクタ (コピー禁止)
   KinectV2(const KinectV2 &w);
@@ -83,10 +86,10 @@ public:
     *height = depthHeight;
   }
 
-  // カラーデータのテクスチャ座標を取得する
-  const GLfloat(*getTexcoord() const)[2]
+  // カラーデータのテクスチャ座標値を格納するバッファオブジェクトを得る
+  GLuint getCoordBuffer() const
   {
-    return texcoord;
+    return coordBuffer;
   }
 
   // 使用しているセンサーの数を調べる

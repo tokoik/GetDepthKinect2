@@ -31,6 +31,9 @@ KinectV2::KinectV2()
     depthDescription->get_Width(&depthWidth);
     depthDescription->get_Height(&depthHeight);
 
+    // デプスデータの画素数を求める
+    depthCount = depthWidth * depthHeight;
+
     // デプスデータを格納するテクスチャを準備する
     glGenTextures(1, &depthTexture);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -39,11 +42,6 @@ KinectV2::KinectV2()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    // デプスデータ変換用の一時バッファを確保する
-    pointCount = depthWidth * depthHeight;
-    pointSize = pointCount * 3 * sizeof (GLfloat);
-    pointBuffer = new GLfloat[pointCount][3];
 
     // デプスデータから求めたカメラ座標を格納するテクスチャを準備する
     glGenTextures(1, &pointTexture);
@@ -54,9 +52,6 @@ KinectV2::KinectV2()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    // デプスデータの画素位置のカラーのテクスチャ座標ほ保存するメモリを確保する
-    texcoord = new GLfloat[pointCount][2];
-
     // カラーデータの読み込み設定
     assert(sensor->get_ColorFrameSource(&colorSource) == S_OK);
     assert(colorSource->OpenReader(&colorReader) == S_OK);
@@ -66,10 +61,10 @@ KinectV2::KinectV2()
     colorDescription->get_Width(&colorWidth);
     colorDescription->get_Height(&colorHeight);
 
-    // カラーデータ変換用の一時バッファを確保する
-    colorBuffer = new BYTE[colorWidth * colorHeight * 4];
+    // カラーデータの画素数を求める
+    colorCount = colorWidth * colorHeight;
 
-    // カラーを格納するテクスチャを準備する
+    // カラーデータを格納するテクスチャを準備する
     glGenTextures(1, &colorTexture);
     glBindTexture(GL_TEXTURE_2D, colorTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, colorWidth, colorHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -77,6 +72,17 @@ KinectV2::KinectV2()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    // デプスデータの画素位置のカラーのテクスチャ座標を格納するバッファオブジェクトを準備する
+    glGenBuffers(1, &coordBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
+    glBufferData(GL_ARRAY_BUFFER, depthCount * 2 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
+
+    // デプスデータからカメラ座標を求めるときに用いる一時メモリを確保する
+    position = new GLfloat[depthCount][3];
+
+    // カラーデータを変換する用いる一時メモリを確保する
+    color = new GLubyte[colorCount * 4];
   }
 }
 
@@ -85,12 +91,17 @@ KinectV2::~KinectV2()
 {
   if (sensor != NULL)
   {
-    // データ変換用の一時バッファを開放する
-    delete[] pointBuffer;
-    delete[] colorBuffer;
+    // データ変換用のメモリを削除する
+    delete[] position;
+    delete[] color;
 
-    // デプスデータの画素位置のカラーのテクスチャ座標ほ保存するメモリを確保する
-    delete[] texcoord;
+    // バッファオブジェクトを削除する
+    glDeleteBuffers(1, &coordBuffer);
+
+    // テクスチャを削除する
+    glDeleteTextures(1, &depthTexture);
+    glDeleteTextures(1, &colorTexture);
+    glDeleteTextures(1, &pointTexture);
 
     // センサを開放する
     colorDescription->Release();
@@ -120,13 +131,14 @@ bool KinectV2::getDepth() const
     UINT16 *depthBuffer;
     depthFrame->AccessUnderlyingBuffer(&depthSize, &depthBuffer);
 
-    // カラーのテクスチャ座標を求めて保存する
-    coordinateMapper->MapDepthFrameToColorSpace(pointCount, depthBuffer, pointCount,
-      reinterpret_cast<ColorSpacePoint *>(texcoord));
+    // カラーのテクスチャ座標を求めて転送する
+    glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
+    ColorSpacePoint *const texcoord(static_cast<ColorSpacePoint *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    coordinateMapper->MapDepthFrameToColorSpace(depthCount, depthBuffer, depthCount, texcoord);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
 
-    // カメラ座標をテクスチャに転送する
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, depthWidth, depthHeight,
-      GL_RED, GL_UNSIGNED_SHORT, depthBuffer);
+    // デプスデータをテクスチャに転送する
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, depthWidth, depthHeight, GL_RED, GL_UNSIGNED_SHORT, depthBuffer);
 
     // デプスフレームを開放する
     depthFrame->Release();
@@ -157,21 +169,23 @@ bool KinectV2::getPoint() const
     coordinateMapper->GetDepthFrameToCameraSpaceTable(&entry, &table);
     for (unsigned int i = 0; i < entry; ++i)
     {
-      pointBuffer[i][2] = depthBuffer[i] == 0.0 ? -10.0f : -0.001f * float(depthBuffer[i]);
-      pointBuffer[i][0] = table[i].X * pointBuffer[i][2];
-      pointBuffer[i][1] = -table[i].Y * pointBuffer[i][2];
+      position[i][2] = depthBuffer[i] == 0.0 ? -10.0f : -0.001f * float(depthBuffer[i]);
+      position[i][0] = table[i].X * position[i][2];
+      position[i][1] = -table[i].Y * position[i][2];
     }
 
-    // カラーのテクスチャ座標を求めて保存する
-    coordinateMapper->MapDepthFrameToColorSpace(pointCount, depthBuffer, pointCount,
-      reinterpret_cast<ColorSpacePoint *>(texcoord));
+    // カラーのテクスチャ座標を求めて転送する
+    glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
+    ColorSpacePoint *const texcoord(static_cast<ColorSpacePoint *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
+    coordinateMapper->MapDepthFrameToColorSpace(depthCount, depthBuffer, depthCount, texcoord);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
 
     // デプスフレームを開放する
     depthFrame->Release();
 
     // カメラ座標をテクスチャに転送する
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, depthWidth, depthHeight,
-      GL_RGB, GL_FLOAT, pointBuffer);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+      depthWidth, depthHeight, GL_RGB, GL_FLOAT, position);
 
     return true;
   }
@@ -190,15 +204,15 @@ bool KinectV2::getColor() const
   if (colorReader->AcquireLatestFrame(&colorFrame) == S_OK)
   {
     // カラーデータを取得して RGBA 形式に変換する
-    colorFrame->CopyConvertedFrameDataToArray(colorWidth * colorHeight * 4,
-      colorBuffer, ColorImageFormat::ColorImageFormat_Rgba);
+    colorFrame->CopyConvertedFrameDataToArray(colorCount * 4,
+      static_cast<BYTE *>(color), ColorImageFormat::ColorImageFormat_Rgba);
 
     // カラーフレームを開放する
     colorFrame->Release();
 
     // カラーデータをテクスチャに転送する
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, colorWidth, colorHeight,
-      GL_RGBA, GL_UNSIGNED_BYTE, colorBuffer);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+      colorWidth, colorHeight, GL_RGBA, GL_UNSIGNED_BYTE, color);
 
     return true;
   }

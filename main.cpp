@@ -65,7 +65,7 @@ int main()
   sensor.getResolution(&width, &height);
 
   // 描画に使うメッシュ
-  const Mesh mesh(width, height, sensor.getTexcoord());
+  const Mesh mesh(width, height, sensor.getCoordBuffer());
 
   // 描画用のシェーダ
   GgSimpleShader simple("simple.vert", "simple.frag");
