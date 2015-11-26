@@ -11,7 +11,10 @@
 // ウィンドウ関連の処理
 #include "Window.h"
 
-class KinectV2
+// 深度センサ関連の基底クラス
+#include "DepthCamera.h"
+
+class KinectV2 : public DepthCamera
 {
   // センサの識別子
   static IKinectSensor *sensor;
@@ -23,9 +26,6 @@ class KinectV2
   IDepthFrameSource *depthSource;
   IDepthFrameReader *depthReader;
   IFrameDescription *depthDescription;
-
-  // デプスデータのサイズ
-  int depthWidth, depthHeight;
 
   // デプスデータを格納するテクスチャ
   GLuint depthTexture;
@@ -46,9 +46,6 @@ class KinectV2
   IColorFrameSource *colorSource;
   IColorFrameReader *colorReader;
   IFrameDescription *colorDescription;
-
-  // カラーデータのサイズ
-  int colorWidth, colorHeight, colorSize;
 
   // カラーデータ変換用の一時バッファ
   BYTE *colorBuffer;

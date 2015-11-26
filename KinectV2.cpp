@@ -67,8 +67,7 @@ KinectV2::KinectV2()
     colorDescription->get_Height(&colorHeight);
 
     // カラーデータ変換用の一時バッファを確保する
-    colorSize = colorWidth * colorHeight * 4;
-    colorBuffer = new BYTE[colorSize];
+    colorBuffer = new BYTE[colorWidth * colorHeight * 4];
 
     // カラーを格納するテクスチャを準備する
     glGenTextures(1, &colorTexture);
@@ -191,8 +190,8 @@ bool KinectV2::getColor() const
   if (colorReader->AcquireLatestFrame(&colorFrame) == S_OK)
   {
     // カラーデータを取得して RGBA 形式に変換する
-    colorFrame->CopyConvertedFrameDataToArray(colorSize, colorBuffer,
-      ColorImageFormat::ColorImageFormat_Rgba);
+    colorFrame->CopyConvertedFrameDataToArray(colorWidth * colorHeight * 4,
+      colorBuffer, ColorImageFormat::ColorImageFormat_Rgba);
 
     // カラーフレームを開放する
     colorFrame->Release();

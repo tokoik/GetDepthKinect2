@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="Calculate.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="DepthCamera.h" />
     <ClInclude Include="gg.h" />
     <ClInclude Include="KinectV2.h" />
     <ClInclude Include="Mesh.h" />
