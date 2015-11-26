@@ -113,6 +113,9 @@ KinectV2::~KinectV2()
     coordinateMapper->Release();
     sensor->Close();
     sensor->Release();
+
+    // センサを開放したことを記録する
+    sensor = NULL;
   }
 }
 

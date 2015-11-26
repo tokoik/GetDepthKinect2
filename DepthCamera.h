@@ -19,7 +19,7 @@ public:
   // コンストラクタ
   DepthCamera()
   {
-  };
+  }
   DepthCamera(int depthWidth, int depthHeight, int colorWidth, int colorHeight)
     : depthWidth(depthWidth)
     , depthHeight(depthHeight)

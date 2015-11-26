@@ -62,7 +62,7 @@ int main()
 
   // 深度センサの解像度
   int width, height;
-  sensor.getResolution(&width, &height);
+  sensor.getDepthResolution(&width, &height);
 
   // 描画に使うメッシュ
   const Mesh mesh(width, height, sensor.getCoordBuffer());
