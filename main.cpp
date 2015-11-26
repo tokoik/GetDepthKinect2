@@ -18,7 +18,7 @@
 #include "Calculate.h"
 
 // 頂点位置の生成をシェーダ (position.frag) で行うなら 1
-#define GENERATE_POSITOPN 0
+#define GENERATE_POSITION 0
 
 //
 // メインプログラム
@@ -86,7 +86,7 @@ int main()
   // ウィンドウが開いている間くり返し描画する
   while (!window.shouldClose())
   {
-#if GENERATE_POSITOPN
+#if GENERATE_POSITION
     // 頂点位置の計算
     position.use();
     glUniform1i(0, 0);
@@ -119,7 +119,7 @@ int main()
     simple.setMaterial(material);
 
     // テクスチャ
-#if GENERATE_POSITOPN
+#if GENERATE_POSITION
     glUniform1i(0, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, positionTexture[0]);
