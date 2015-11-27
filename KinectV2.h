@@ -71,19 +71,26 @@ public:
   virtual ~KinectV2();
 
   // デプスデータを取得する
-  bool getDepth() const;
+  GLuint getDepth() const;
 
   // カメラ座標を取得する
-  bool getPoint() const;
+  GLuint getPoint() const;
 
   // カラーデータを取得する
-  bool getColor() const;
+  GLuint getColor() const;
 
   // デプスデータの解像度を取得する
-  void getResolution(int *width, int *height) const
+  void getDepthResolution(int *width, int *height) const
   {
     *width = depthWidth;
     *height = depthHeight;
+  }
+
+  // カラーデータの解像度を取得する
+  void getColorResolution(int *width, int *height) const
+  {
+    *width = colorWidth;
+    *height = colorHeight;
   }
 
   // カラーデータのテクスチャ座標値を格納するバッファオブジェクトを得る

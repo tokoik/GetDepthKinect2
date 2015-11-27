@@ -120,7 +120,7 @@ KinectV2::~KinectV2()
 }
 
 // デプスデータを取得する
-bool KinectV2::getDepth() const
+GLuint KinectV2::getDepth() const
 {
   // デプスのテクスチャを指定する
   glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -145,15 +145,13 @@ bool KinectV2::getDepth() const
 
     // デプスフレームを開放する
     depthFrame->Release();
-
-    return true;
   }
 
-  return false;
+  return depthTexture;
 }
 
 // カメラ座標を取得する
-bool KinectV2::getPoint() const
+GLuint KinectV2::getPoint() const
 {
   // カメラ座標のテクスチャを指定する
   glBindTexture(GL_TEXTURE_2D, pointTexture);
@@ -189,15 +187,13 @@ bool KinectV2::getPoint() const
     // カメラ座標をテクスチャに転送する
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
       depthWidth, depthHeight, GL_RGB, GL_FLOAT, position);
-
-    return true;
   }
 
-  return false;
+  return pointTexture;
 }
 
 // カラーデータを取得する
-bool KinectV2::getColor() const
+GLuint KinectV2::getColor() const
 {
   // カラーのテクスチャを指定する
   glBindTexture(GL_TEXTURE_2D, colorTexture);
@@ -216,11 +212,9 @@ bool KinectV2::getColor() const
     // カラーデータをテクスチャに転送する
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
       colorWidth, colorHeight, GL_RGBA, GL_UNSIGNED_BYTE, color);
-
-    return true;
   }
 
-  return false;
+  return colorTexture;
 }
 
 // センサの識別子
