@@ -31,27 +31,6 @@ KinectV2::KinectV2()
     depthDescription->get_Width(&depthWidth);
     depthDescription->get_Height(&depthHeight);
 
-    // デプスデータの画素数を求める
-    depthCount = depthWidth * depthHeight;
-
-    // デプスデータを格納するテクスチャを準備する
-    glGenTextures(1, &depthTexture);
-    glBindTexture(GL_TEXTURE_2D, depthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, depthWidth, depthHeight, 0, GL_RED, GL_UNSIGNED_SHORT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    // デプスデータから求めたカメラ座標を格納するテクスチャを準備する
-    glGenTextures(1, &pointTexture);
-    glBindTexture(GL_TEXTURE_2D, pointTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, depthWidth, depthHeight, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
     // カラーデータの読み込み設定
     assert(sensor->get_ColorFrameSource(&colorSource) == S_OK);
     assert(colorSource->OpenReader(&colorReader) == S_OK);
@@ -61,22 +40,8 @@ KinectV2::KinectV2()
     colorDescription->get_Width(&colorWidth);
     colorDescription->get_Height(&colorHeight);
 
-    // カラーデータの画素数を求める
-    colorCount = colorWidth * colorHeight;
-
-    // カラーデータを格納するテクスチャを準備する
-    glGenTextures(1, &colorTexture);
-    glBindTexture(GL_TEXTURE_2D, colorTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, colorWidth, colorHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    // デプスデータの画素位置のカラーのテクスチャ座標を格納するバッファオブジェクトを準備する
-    glGenBuffers(1, &coordBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
-    glBufferData(GL_ARRAY_BUFFER, depthCount * 2 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
+    // depthCount と colorCount を計算してテクスチャとバッファオブジェクトを作成する
+    makeTexture();
 
     // デプスデータからカメラ座標を求めるときに用いる一時メモリを確保する
     position = new GLfloat[depthCount][3];
@@ -94,14 +59,6 @@ KinectV2::~KinectV2()
     // データ変換用のメモリを削除する
     delete[] position;
     delete[] color;
-
-    // バッファオブジェクトを削除する
-    glDeleteBuffers(1, &coordBuffer);
-
-    // テクスチャを削除する
-    glDeleteTextures(1, &depthTexture);
-    glDeleteTextures(1, &colorTexture);
-    glDeleteTextures(1, &pointTexture);
 
     // センサを開放する
     colorDescription->Release();
@@ -170,9 +127,13 @@ GLuint KinectV2::getPoint() const
     coordinateMapper->GetDepthFrameToCameraSpaceTable(&entry, &table);
     for (unsigned int i = 0; i < entry; ++i)
     {
-      position[i][2] = depthBuffer[i] == 0.0 ? -10.0f : -0.001f * float(depthBuffer[i]);
-      position[i][0] = table[i].X * position[i][2];
-      position[i][1] = -table[i].Y * position[i][2];
+      const GLfloat z(depthBuffer[i] == 0.0 ? -10.0f : -0.001f * float(depthBuffer[i]));
+      const GLfloat x(table[i].X);
+      const GLfloat y(-table[i].Y);
+
+      position[i][0] = x * z;
+      position[i][1] = y * z;
+      position[i][2] = z;
     }
 
     // カラーのテクスチャ座標を求めて転送する
@@ -185,8 +146,7 @@ GLuint KinectV2::getPoint() const
     depthFrame->Release();
 
     // カメラ座標をテクスチャに転送する
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-      depthWidth, depthHeight, GL_RGB, GL_FLOAT, position);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, depthWidth, depthHeight, GL_RGB, GL_FLOAT, position);
   }
 
   return pointTexture;
@@ -204,14 +164,13 @@ GLuint KinectV2::getColor() const
   {
     // カラーデータを取得して RGBA 形式に変換する
     colorFrame->CopyConvertedFrameDataToArray(colorCount * 4,
-      static_cast<BYTE *>(color), ColorImageFormat::ColorImageFormat_Rgba);
+      static_cast<BYTE *>(color), ColorImageFormat::ColorImageFormat_Bgra);
 
     // カラーフレームを開放する
     colorFrame->Release();
 
     // カラーデータをテクスチャに転送する
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
-      colorWidth, colorHeight, GL_RGBA, GL_UNSIGNED_BYTE, color);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, colorWidth, colorHeight, GL_BGRA, GL_UNSIGNED_BYTE, color);
   }
 
   return colorTexture;
