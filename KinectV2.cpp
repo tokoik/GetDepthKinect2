@@ -10,11 +10,14 @@
 // Kinect 関連
 #pragma comment(lib, "Kinect20.lib")
 
+// 計測不能点のデフォルト距離
+const GLfloat maxDepth(10.0f);
+
 // コンストラクタ
 KinectV2::KinectV2()
 {
   // センサを取得する
-  if (GetDefaultKinectSensor(&sensor) == S_OK)
+  if (sensor == NULL && GetDefaultKinectSensor(&sensor) == S_OK)
   {
     // センサの使用を開始する
     assert(sensor->Open() == S_OK);
@@ -54,7 +57,7 @@ KinectV2::KinectV2()
 // デストラクタ
 KinectV2::~KinectV2()
 {
-  if (sensor != NULL)
+  if (getActivated() > 0)
   {
     // データ変換用のメモリを削除する
     delete[] position;
@@ -122,15 +125,22 @@ GLuint KinectV2::getPoint() const
     UINT16 *depthBuffer;
     depthFrame->AccessUnderlyingBuffer(&depthSize, &depthBuffer);
 
+    // カメラ座標への変換テーブルを得る
     UINT32 entry;
     PointF *table;
     coordinateMapper->GetDepthFrameToCameraSpaceTable(&entry, &table);
+
+    // すべての点について
     for (unsigned int i = 0; i < entry; ++i)
     {
-      const GLfloat z(depthBuffer[i] == 0.0 ? -10.0f : -0.001f * float(depthBuffer[i]));
+      // その点の深度の単位をメートルに直す (計測不能点は maxDepth にする)
+      const GLfloat z(depthBuffer[i] == 0.0 ? -maxDepth : -0.001f * float(depthBuffer[i]));
+
+      // その点のスクリーン上の位置を求める
       const GLfloat x(table[i].X);
       const GLfloat y(-table[i].Y);
 
+      // その点のカメラ座標を求める
       position[i][0] = x * z;
       position[i][1] = y * z;
       position[i][2] = z;
@@ -145,7 +155,7 @@ GLuint KinectV2::getPoint() const
     // デプスフレームを開放する
     depthFrame->Release();
 
-    // カメラ座標をテクスチャに転送する
+    // カメラ座標を転送する
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, depthWidth, depthHeight, GL_RGB, GL_FLOAT, position);
   }
 
@@ -175,6 +185,7 @@ GLuint KinectV2::getColor() const
 
   return colorTexture;
 }
+
 
 // センサの識別子
 IKinectSensor *KinectV2::sensor(NULL);

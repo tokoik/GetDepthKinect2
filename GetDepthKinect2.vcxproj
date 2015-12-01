@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Calculate.cpp" />
+    <ClCompile Include="DepthCamera.cpp" />
     <ClCompile Include="gg.cpp" />
     <ClCompile Include="KinectV2.cpp" />
     <ClCompile Include="main.cpp" />

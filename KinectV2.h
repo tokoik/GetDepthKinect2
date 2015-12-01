@@ -8,9 +8,6 @@
 #include <Windows.h>
 #include <Kinect.h>
 
-// ウィンドウ関連の処理
-#include "Window.h"
-
 // 深度センサ関連の基底クラス
 #include "DepthCamera.h"
 
@@ -60,10 +57,4 @@ public:
 
   // カラーデータを取得する
   GLuint getColor() const;
-
-  // 使用しているセンサーの数を調べる
-  int getActivated() const
-  {
-    return sensor != NULL ? 1 : 0;
-  }
 };
