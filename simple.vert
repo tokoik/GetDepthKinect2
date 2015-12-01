@@ -22,6 +22,7 @@ uniform mat4 mg;                                    // 法線ベクトルの変換行列
 // テクスチャ
 layout (location = 0) uniform sampler2D position;   // 頂点位置のテクスチャ
 layout (location = 1) uniform sampler2D normal;     // 法線ベクトルのテクスチャ
+layout (location = 2) uniform sampler2D color;      // カラーのテクスチャ
 
 // 頂点属性
 layout (location = 0) in vec2 pc;                   // 頂点のテクスチャ座標
@@ -53,7 +54,7 @@ void main(void)
   ispec = pow(max(dot(n, h), 0.0), kshi) * kspec * lspec;
 
   // テクスチャ座標
-  texcoord = cc * vec2(5.2083333e-4, 9.2592593e-4);	// = 1 / vec2(1920, 1080)
+  texcoord = cc / vec2(textureSize(color, 0));
 
   // クリッピング座標系における座標値
   gl_Position = mc * pv;
