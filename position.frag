@@ -21,7 +21,7 @@ in vec2 texcoord;
 // フレームバッファに出力するデータ
 layout (location = 0) out vec3 position;
 
-// 深度値をスケーリングする
+// デプス値をスケーリングする
 float s(in float z)
 {
   return z == 0.0 ? DEPTH_MAXIMUM : z * DEPTH_SCALE;
@@ -29,9 +29,9 @@ float s(in float z)
 
 void main(void)
 {
-  // 深度を取り出す
+  // デプス値を取り出す
   float z = s(texture(depth, texcoord).r);
 
-  // 深度から座標値を求める
+  // デプス値からカメラ座標値を求める
   position = vec3((texcoord - 0.5) * scale * z, z);
 }

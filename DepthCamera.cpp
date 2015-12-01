@@ -53,13 +53,13 @@ DepthCamera::~DepthCamera()
   // センサが有効になっていたら
   if (activated > 0)
   {
-    // バッファオブジェクトを削除する
-    glDeleteBuffers(1, &coordBuffer);
-
     // テクスチャを削除する
     glDeleteTextures(1, &depthTexture);
     glDeleteTextures(1, &colorTexture);
     glDeleteTextures(1, &pointTexture);
+
+    // バッファオブジェクトを削除する
+    glDeleteBuffers(1, &coordBuffer);
 
     // 使用しているセンサの数を減らす
     --activated;

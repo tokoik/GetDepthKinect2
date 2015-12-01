@@ -133,8 +133,14 @@ GLuint KinectV2::getPoint() const
     // すべての点について
     for (unsigned int i = 0; i < entry; ++i)
     {
-      // その点の深度の単位をメートルに直す (計測不能点は maxDepth にする)
-      const GLfloat z(depthBuffer[i] == 0.0 ? -maxDepth : -0.001f * float(depthBuffer[i]));
+      // デプス値の単位をメートルに換算する係数
+      static const GLfloat zScale(-0.001f);
+
+      // その点のデプス値を得る
+      const unsigned short d(depthBuffer[i]);
+
+      // デプス値の単位をメートルに換算する (計測不能点は maxDepth にする)
+      const GLfloat z(d == 0 ? -maxDepth : GLfloat(d) * zScale);
 
       // その点のスクリーン上の位置を求める
       const GLfloat x(table[i].X);
@@ -146,7 +152,7 @@ GLuint KinectV2::getPoint() const
       position[i][2] = z;
     }
 
-    // カラーのテクスチャ座標を求めて転送する
+    // カラーのテクスチャ座標を求めてバッファオブジェクトに転送する
     glBindBuffer(GL_ARRAY_BUFFER, coordBuffer);
     ColorSpacePoint *const texcoord(static_cast<ColorSpacePoint *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)));
     coordinateMapper->MapDepthFrameToColorSpace(depthCount, depthBuffer, depthCount, texcoord);
